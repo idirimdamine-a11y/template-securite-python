@@ -1,3 +1,5 @@
+import re
+
 from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
 from scapy.all import sniff, rdpcap, TCP, UDP, ICMP, ARP, IP, Raw
@@ -10,6 +12,7 @@ class Capture:
         self.summary = ""
         self.packets = []
         self.alerts = []
+        self.flag = None
 
     def capture_traffic(self) -> None:
         """
@@ -57,10 +60,12 @@ class Capture:
         Analyse le trafic et détecte les attaques :
         - scan de ports
         - ARP spoofing
+        - injection SQL (et extraction du flag)
         """
         self.alerts = []
         syn_ports = {}
         arp_macs = {}
+        sql_patterns = [b"or 1=1", b"union select", b"sqlmap", b"' or '"]
 
         for pkt in self.packets:
 
@@ -76,6 +81,18 @@ class Capture:
                 ip = pkt[ARP].psrc
                 mac = pkt[ARP].hwsrc
                 arp_macs.setdefault(ip, set()).add(mac)
+
+            # Injection SQL : motifs techniques dans le contenu HTTP
+            if pkt.haslayer(Raw) and pkt.haslayer(IP):
+                payload = bytes(pkt[Raw].load)
+                data = payload.lower()
+                if any(p in data for p in sql_patterns):
+                    src = pkt[IP].src
+                    self._add_alert("sql_injection", src)
+                    # le vrai flag est dans le paquet d'attaque
+                    match = re.search(rb"ESGI\{[^}]+\}", payload)
+                    if match:
+                        self.flag = match.group().decode()
 
         # Conclusion scan
         for ip, ports in syn_ports.items():
