@@ -1,3 +1,6 @@
+
+from scapy.all import get_if_list
+
 def hello_world() -> str:
     """
     Hello world function
@@ -13,5 +16,6 @@ def choose_interface() -> str:
 
     :return: network interface
     """
-    interface = ""
+    print("Interfaces disponibles :", get_if_list())
+    interface = input("Nom de l'interface : ")
     return interface
