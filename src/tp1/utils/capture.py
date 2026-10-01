@@ -54,21 +54,39 @@ class Capture:
 
     def analyse(self, protocols: str = None) -> None:
         """
-        Analyse le trafic et détecte les attaques.
+        Analyse le trafic et détecte les attaques :
+        - scan de ports
+        - ARP spoofing
         """
         self.alerts = []
         syn_ports = {}
+        arp_macs = {}
 
         for pkt in self.packets:
+
+            # Scan de ports : SYN seul vers un port
             if pkt.haslayer(TCP) and pkt.haslayer(IP):
                 if pkt[TCP].flags == "S":
                     src = pkt[IP].src
                     port = pkt[TCP].dport
                     syn_ports.setdefault(src, set()).add(port)
 
+            # ARP spoofing : reponse ARP (op == 2)
+            if pkt.haslayer(ARP) and pkt[ARP].op == 2:
+                ip = pkt[ARP].psrc
+                mac = pkt[ARP].hwsrc
+                arp_macs.setdefault(ip, set()).add(mac)
+
+        # Conclusion scan
         for ip, ports in syn_ports.items():
             if len(ports) > 20:
                 self._add_alert("port_scan", ip)
+
+        # Conclusion ARP spoofing
+        for ip, macs in arp_macs.items():
+            if len(macs) > 1:
+                for mac in macs:
+                    self._add_alert("arp_spoofing", mac)
 
         self.summary = self._gen_summary()
 
