@@ -2,6 +2,7 @@ from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
 from scapy.all import sniff, rdpcap, TCP, UDP, ICMP, ARP, IP, Raw
 
+
 class Capture:
     def __init__(self, pcap_file: str = None) -> None:
         self.pcap_file = pcap_file
@@ -9,9 +10,10 @@ class Capture:
         self.summary = ""
         self.packets = []
         self.alerts = []
+
     def capture_traffic(self) -> None:
         """
-        Capture network traffic from an interface
+        Charge le trafic : depuis un PCAP (correction) ou en live (dev).
         """
         if self.pcap_file:
             logger.info(f"Lecture du fichier PCAP {self.pcap_file}")
@@ -23,15 +25,7 @@ class Capture:
 
         logger.info(f"{len(self.packets)} paquets chargés")
 
-    def sort_network_protocols(self) -> str:
-        """
-        Sort and return all captured network protocols
-        """
-        protocols = self.get_all_protocols()
-
-        return dict(sorted(protocols.items()))
-
-    def get_all_protocols(self) -> str:
+    def get_all_protocols(self) -> dict:
         counts = {}
         for pkt in self.packets:
             if pkt.haslayer(TCP):
@@ -44,40 +38,43 @@ class Capture:
                 proto = "ARP"
             else:
                 proto = "Other"
-
             counts[proto] = counts.get(proto, 0) + 1
-
         return counts
 
-    def analyse(self, protocols: str) -> None:
+    def sort_network_protocols(self) -> dict:
+        protocols = self.get_all_protocols()
+        return dict(sorted(protocols.items()))
+
+    def _add_alert(self, attack_type: str, attacker: str) -> None:
+        """Ajoute une alerte sans doublon."""
+        alert = {"type": attack_type, "attacker": attacker}
+        if alert not in self.alerts:
+            self.alerts.append(alert)
+            logger.warning(f"{attack_type} détecté : {attacker}")
+
+    def analyse(self, protocols: str = None) -> None:
         """
-        Analyse all captured data and return statement
-        Si un tra c est illégitime (exemple : Injection SQL, ARP
-        Spoo ng, etc)
-        a Noter la tentative d'attaque.
-        b Relever le protocole ainsi que l'adresse réseau/physique
-        de l'attaquant.
-        c (FACULTATIF) Opérer le blocage de la machine
-        attaquante.
-        Sinon a cher que tout va bien
+        Analyse le trafic et détecte les attaques.
         """
-        all_protocols = self.get_all_protocols()
-        sort = self.sort_network_protocols()
-        logger.debug(f"All protocols: {all_protocols}")
-        logger.debug(f"Sorted protocols: {sort}")
+        self.alerts = []
+        syn_ports = {}
+
+        for pkt in self.packets:
+            if pkt.haslayer(TCP) and pkt.haslayer(IP):
+                if pkt[TCP].flags == "S":
+                    src = pkt[IP].src
+                    port = pkt[TCP].dport
+                    syn_ports.setdefault(src, set()).add(port)
+
+        for ip, ports in syn_ports.items():
+            if len(ports) > 20:
+                self._add_alert("port_scan", ip)
 
         self.summary = self._gen_summary()
 
     def get_summary(self) -> str:
-        """
-        Return summary
-        :return:
-        """
         return self.summary
 
     def _gen_summary(self) -> str:
-        """
-        Generate summary
-        """
         summary = ""
         return summary
