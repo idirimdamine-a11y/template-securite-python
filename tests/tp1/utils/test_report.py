@@ -1,84 +1,57 @@
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock
 from src.tp1.utils.report import Report
 
 
-def test_report_init():
-    # Given
+def _make_report():
     capture = MagicMock()
-    filename = "test.pdf"
-    summary = "Test summary"
+    capture.get_all_protocols.return_value = {"TCP": 5, "ARP": 2}
+    capture.alerts = [{"type": "port_scan", "attacker": "10.0.0.9"}]
+    capture.flag = "ESGI{test}"
+    return Report(capture, "test.pdf", "Resume test")
 
-    # When
-    report = Report(capture, filename, summary)
 
-    # Then
+def test_report_init():
+    capture = MagicMock()
+    report = Report(capture, "test.pdf", "Test summary")
     assert report.capture == capture
-    assert report.filename == filename
-    assert report.title == "TITRE DU RAPPORT"
-    assert report.summary == summary
-    assert report.array == ""
-    assert report.graph == ""
+    assert report.filename == "test.pdf"
+    assert report.summary == "Test summary"
 
 
-def test_concat_report():
-    # Given
-    report = Report(MagicMock(), "test.pdf", "Test summary")
-    report.title = "Test Title"
-    report.array = "Test Array"
-    report.graph = "Test Graph"
-
-    # When
-    result = report.concat_report()
-
-    # Then
-    assert result == "Test TitleTest summaryTest ArrayTest Graph"
-
-
-def test_save():
-    # Given
-    report = Report(MagicMock(), "test.pdf", "Test summary")
-    report.title = "Test Title"
-
-    # When/Then
-    with patch("builtins.open", mock_open()) as mock_file:
-        report.save("test.pdf")
-
-        # Verify file was opened with correct name
-        mock_file.assert_called_once_with("test.pdf", "w")
-
-        # Verify write was called with the concatenated content
-        mock_file().write.assert_called_once_with("Test TitleTest summary")
-
-
-def test_generate_graph():
-    # Given
-    report = Report(MagicMock(), "test.pdf", "Test summary")
-
-    # When
-    report.generate("graph")
-
-    # Then
-    assert report.graph == ""  # Currently returns empty string
+def test_save_json(tmp_path):
+    report = _make_report()
+    output = tmp_path / "report.json"
+    result = report.save_json(str(output))
+    assert result["protocols"] == {"TCP": 5, "ARP": 2}
+    assert result["flag"] == "ESGI{test}"
+    assert output.exists()
 
 
 def test_generate_array():
-    # Given
-    report = Report(MagicMock(), "test.pdf", "Test summary")
-
-    # When
+    report = _make_report()
     report.generate("array")
+    assert "TCP" in report.array
+    assert "port_scan" in report.array
 
-    # Then
-    assert report.array == ""  # Currently returns empty string
+
+def test_generate_graph(tmp_path):
+    report = _make_report()
+    report.graph_file = str(tmp_path / "graph.png")
+    report.generate("graph")
+    assert report.graph == report.graph_file
 
 
 def test_generate_invalid_param():
-    # Given
-    report = Report(MagicMock(), "test.pdf", "Test summary")
-
-    # When
+    report = _make_report()
     report.generate("invalid")
-
-    # Then
-    assert report.graph == ""
     assert report.array == ""
+    assert report.graph == ""
+
+
+def test_save_creates_pdf(tmp_path):
+    report = _make_report()
+    report.generate("array")
+    report.generate("graph")
+    output = tmp_path / "report.pdf"
+    report.save(str(output))
+    assert output.exists()

@@ -1,6 +1,7 @@
 import json
 
 import matplotlib
+
 matplotlib.use("Agg")  # backend sans écran (bac à sable sans affichage)
 import matplotlib.pyplot as plt
 from fpdf import FPDF
@@ -40,7 +41,7 @@ class Report:
         if param == "graph":
             protocols = self.capture.get_all_protocols()
             plt.figure(figsize=(6, 4))
-            plt.bar(protocols.keys(), protocols.values(), color="steelblue")
+            plt.bar(list(protocols.keys()), list(protocols.values()), color="steelblue")
             plt.title("Volume de paquets par protocole")
             plt.xlabel("Protocole")
             plt.ylabel("Nombre de paquets")

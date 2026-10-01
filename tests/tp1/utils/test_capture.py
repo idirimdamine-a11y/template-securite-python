@@ -1,88 +1,73 @@
-from unittest.mock import patch
+from scapy.all import IP, TCP, ARP, Raw
 from src.tp1.utils.capture import Capture
 
 
 def test_capture_init():
-    # When
     capture = Capture()
-
-    # Then
-    assert capture.interface == ""
+    assert capture.packets == []
+    assert capture.alerts == []
+    assert capture.flag is None
     assert capture.summary == ""
 
 
-def test_given_capture_when_capture_traffic_then_interface_is_set():
-    # Given
+def test_get_all_protocols():
     capture = Capture()
-
-    # When
-    capture.capture_traffic()
-
-    # Then
-    # This is a minimal test since the method doesn't do much yet
-    assert capture.interface == ""
+    capture.packets = [IP() / TCP(), IP() / TCP(), ARP()]
+    result = capture.get_all_protocols()
+    assert result["TCP"] == 2
+    assert result["ARP"] == 1
 
 
 def test_sort_network_protocols():
-    # Given
     capture = Capture()
-
-    # When
+    capture.packets = [ARP(), IP() / TCP()]
     result = capture.sort_network_protocols()
-
-    # Then
-    assert result == ""  # Method currently returns None
+    assert list(result.keys()) == ["ARP", "TCP"]
 
 
-def test_get_all_protocols():
-    # Given
+def test_add_alert_no_duplicate():
     capture = Capture()
-
-    # When
-    result = capture.get_all_protocols()
-
-    # Then
-    assert result == ""  # Method currently returns None
+    capture._add_alert("port_scan", "10.0.0.1")
+    capture._add_alert("port_scan", "10.0.0.1")
+    assert len(capture.alerts) == 1
 
 
-def test_analyse():
-    # Given
+def test_analyse_detects_port_scan():
     capture = Capture()
+    capture.packets = [
+        IP(src="10.0.0.9", dst="10.0.0.1") / TCP(dport=p, flags="S")
+        for p in range(1000, 1025)
+    ]
+    capture.analyse()
+    assert {"type": "port_scan", "attacker": "10.0.0.9"} in capture.alerts
 
-    # When
-    with (
-        patch.object(capture, "get_all_protocols") as mock_get_protocols,
-        patch.object(capture, "sort_network_protocols") as mock_sort,
-        patch.object(capture, "_gen_summary") as mock_gen_summary,
-    ):
-        mock_gen_summary.return_value = "Test summary"
-        capture.analyse("tcp")
 
-    # Then
-    mock_get_protocols.assert_called_once()
-    mock_sort.assert_called_once()
-    mock_gen_summary.assert_called_once()
-    assert capture.summary == "Test summary"
+def test_analyse_detects_arp_spoofing():
+    capture = Capture()
+    capture.packets = [
+        ARP(op=2, psrc="10.0.0.1", hwsrc="aa:aa:aa:aa:aa:aa"),
+        ARP(op=2, psrc="10.0.0.1", hwsrc="bb:bb:bb:bb:bb:bb"),
+    ]
+    capture.analyse()
+    types = [a["type"] for a in capture.alerts]
+    assert "arp_spoofing" in types
+
+
+def test_analyse_detects_sql_injection_and_flag():
+    payload = b"GET /login?user=admin' OR 1=1-- &token=ESGI{test_flag} HTTP/1.1"
+    capture = Capture()
+    capture.packets = [IP(src="10.0.0.5") / TCP() / Raw(load=payload)]
+    capture.analyse()
+    assert {"type": "sql_injection", "attacker": "10.0.0.5"} in capture.alerts
+    assert capture.flag == "ESGI{test_flag}"
 
 
 def test_get_summary():
-    # Given
     capture = Capture()
-    capture.summary = "Test summary"
-
-    # When
-    result = capture.get_summary()
-
-    # Then
-    assert result == "Test summary"
+    capture.summary = "resume"
+    assert capture.get_summary() == "resume"
 
 
 def test_gen_summary():
-    # Given
     capture = Capture()
-
-    # When
-    result = capture._gen_summary()
-
-    # Then
-    assert result == ""  # Method currently returns empty string
+    assert capture._gen_summary() == ""

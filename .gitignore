@@ -11,3 +11,11 @@ app.log
 .env
 pcap/
 uv.lock
+report.json
+graph.png
+*.png
+.coverage
+test.pdf
+report.json
+graph.png
+*.png

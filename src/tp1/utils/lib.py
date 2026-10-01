@@ -1,6 +1,7 @@
 
 from scapy.all import get_if_list
 
+
 def hello_world() -> str:
     """
     Hello world function

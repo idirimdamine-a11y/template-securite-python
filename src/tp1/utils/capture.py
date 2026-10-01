@@ -1,12 +1,13 @@
 import re
 
+from scapy.all import ARP, ICMP, IP, TCP, UDP, Raw, rdpcap, sniff
+
 from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
-from scapy.all import sniff, rdpcap, TCP, UDP, ICMP, ARP, IP, Raw
 
 
 class Capture:
-    def __init__(self, pcap_file: str = None) -> None:
+    def __init__(self, pcap_file: str | None = None) -> None:
         self.pcap_file = pcap_file
         self.interface = None
         self.summary = ""
@@ -55,7 +56,7 @@ class Capture:
             self.alerts.append(alert)
             logger.warning(f"{attack_type} détecté : {attacker}")
 
-    def analyse(self, protocols: str = None) -> None:
+    def analyse(self, protocols: str | None = None) -> None:
         """
         Analyse le trafic et détecte les attaques :
         - scan de ports
@@ -70,11 +71,10 @@ class Capture:
         for pkt in self.packets:
 
             # Scan de ports : SYN seul vers un port
-            if pkt.haslayer(TCP) and pkt.haslayer(IP):
-                if pkt[TCP].flags == "S":
-                    src = pkt[IP].src
-                    port = pkt[TCP].dport
-                    syn_ports.setdefault(src, set()).add(port)
+            if pkt.haslayer(TCP) and pkt.haslayer(IP) and pkt[TCP].flags == "S":
+                src = pkt[IP].src
+                port = pkt[TCP].dport
+                syn_ports.setdefault(src, set()).add(port)
 
             # ARP spoofing : reponse ARP (op == 2)
             if pkt.haslayer(ARP) and pkt[ARP].op == 2:
