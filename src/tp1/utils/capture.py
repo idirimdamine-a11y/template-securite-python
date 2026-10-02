@@ -1,7 +1,6 @@
 import re
 
-from scapy.all import ARP, ICMP, IP, TCP, UDP, Raw, rdpcap, sniff
-
+from scapy.all import ARP, DNS, ICMP, IP, TCP, UDP, Ether, Raw, rdpcap, sniff
 from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
 
@@ -30,19 +29,25 @@ class Capture:
         logger.info(f"{len(self.packets)} paquets chargés")
 
     def get_all_protocols(self) -> dict:
+        """Compte chaque couche protocolaire présente dans les paquets."""
         counts = {}
         for pkt in self.packets:
+            if pkt.haslayer(Ether):
+                counts["ETHERNET"] = counts.get("ETHERNET", 0) + 1
+            if pkt.haslayer(IP):
+                counts["IP"] = counts.get("IP", 0) + 1
+            if pkt.haslayer(ARP):
+                counts["ARP"] = counts.get("ARP", 0) + 1
             if pkt.haslayer(TCP):
-                proto = "TCP"
-            elif pkt.haslayer(UDP):
-                proto = "UDP"
-            elif pkt.haslayer(ICMP):
-                proto = "ICMP"
-            elif pkt.haslayer(ARP):
-                proto = "ARP"
-            else:
-                proto = "Other"
-            counts[proto] = counts.get(proto, 0) + 1
+                counts["TCP"] = counts.get("TCP", 0) + 1
+                if pkt.haslayer(Raw) and 80 in (pkt[TCP].sport, pkt[TCP].dport):
+                    counts["HTTP"] = counts.get("HTTP", 0) + 1
+            if pkt.haslayer(UDP):
+                counts["UDP"] = counts.get("UDP", 0) + 1
+            if pkt.haslayer(ICMP):
+                counts["ICMP"] = counts.get("ICMP", 0) + 1
+            if pkt.haslayer(DNS):
+                counts["DNS"] = counts.get("DNS", 0) + 1
         return counts
 
     def sort_network_protocols(self) -> dict:

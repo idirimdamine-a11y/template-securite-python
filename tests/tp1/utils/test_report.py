@@ -40,6 +40,13 @@ def test_generate_graph(tmp_path):
     report.generate("graph")
     assert report.graph == report.graph_file
 
+def test_concat_report():
+    report = _make_report()
+    report.title = "Titre"
+    report.array = "Contenu"
+    result = report.concat_report()
+    assert "Titre" in result
+    assert "Contenu" in result
 
 def test_generate_invalid_param():
     report = _make_report()

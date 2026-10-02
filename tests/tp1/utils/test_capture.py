@@ -62,6 +62,14 @@ def test_analyse_detects_sql_injection_and_flag():
     assert capture.flag == "ESGI{test_flag}"
 
 
+def test_capture_traffic_from_pcap(tmp_path):
+    from scapy.all import wrpcap, IP, ICMP
+    pcap_path = tmp_path / "test.pcap"
+    wrpcap(str(pcap_path), [IP() / ICMP()])
+    capture = Capture(pcap_file=str(pcap_path))
+    capture.capture_traffic()
+    assert len(capture.packets) == 1
+
 def test_get_summary():
     capture = Capture()
     capture.summary = "resume"
