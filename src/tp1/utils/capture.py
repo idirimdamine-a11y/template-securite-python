@@ -1,6 +1,6 @@
 import re
 
-from scapy.all import ARP, DNS, ICMP, IP, TCP, UDP, Raw, rdpcap, sniff, ETHERNET
+from scapy.all import ARP, DNS, ICMP, IP, TCP, UDP, Ether, Raw, rdpcap, sniff
 from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
 
@@ -32,7 +32,7 @@ class Capture:
         """Compte chaque couche protocolaire présente dans les paquets."""
         counts = {}
         for pkt in self.packets:
-            if pkt.haslayer(ETHERNET):
+            if pkt.haslayer(Ether):
                 counts["ETHERNET"] = counts.get("ETHERNET", 0) + 1
             if pkt.haslayer(IP):
                 counts["IP"] = counts.get("IP", 0) + 1
