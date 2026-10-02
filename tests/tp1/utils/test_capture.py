@@ -22,8 +22,7 @@ def test_sort_network_protocols():
     capture = Capture()
     capture.packets = [ARP(), IP() / TCP()]
     result = capture.sort_network_protocols()
-    assert list(result.keys()) == ["ARP", "TCP"]
-
+    assert list(result.keys()) == ["ARP", "IP", "TCP"]
 
 def test_add_alert_no_duplicate():
     capture = Capture()
