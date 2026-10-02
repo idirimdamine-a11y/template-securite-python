@@ -1,6 +1,6 @@
 
 from scapy.all import get_if_list
-
+from tp1.utils.config import logger
 
 def hello_world() -> str:
     """
@@ -17,6 +17,6 @@ def choose_interface() -> str:
 
     :return: network interface
     """
-    print("Interfaces disponibles :", get_if_list())
+    logger.info("Interfaces disponibles : %s", get_if_list())
     interface = input("Nom de l'interface : ")
     return interface
