@@ -19,9 +19,8 @@ def test_validate_borne_le_score_et_filtre_mitre():
 
 
 def test_validate_rejette_un_json_incomplet():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         LLMTriage()._validate('{"famille": "dropper"}')
-
 
 def test_triage_repli_si_erreur(monkeypatch):
     def panne(self, summary):

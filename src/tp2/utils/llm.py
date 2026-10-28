@@ -57,7 +57,7 @@ class LLMTriage:
         try:
             verdict = self._validate(self._ask(summary))
             verdict["source"] = self.backend
-        except (requests.RequestException, ValueError, KeyError) as e:
+        except (requests.RequestException, ValueError, KeyError, TypeError) as e:
             logger.warning(f"LLM indisponible ou réponse invalide ({e}) : repli déterministe")
             verdict = dict(FALLBACK_VERDICT)
         return json.dumps(verdict, ensure_ascii=False)
