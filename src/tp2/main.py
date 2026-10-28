@@ -27,8 +27,9 @@ def main(argv: list[str] | None = None) -> None:
         try:
             result = Triage(str(path), args.llm, scanner).run()
             report = Report(result)
+            report.generate_json(str(out_dir / f"{path.name}.triage.json"))
             report.generate_json(str(out_dir / f"{result['sha256']}.json"))
-            report.generate_pdf(str(out_dir / f"{result['sha256']}.pdf"))
+            report.generate_pdf(str(out_dir / f"{path.name}.triage.pdf"))
         except Exception as e:  # noqa: BLE001 - un échantillon défectueux ne doit pas bloquer les autres
             logger.error(f"Échec sur {path} : {e}")
 
