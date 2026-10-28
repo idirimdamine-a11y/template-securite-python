@@ -1,6 +1,8 @@
 
 from scapy.all import get_if_list
+
 from tp1.utils.config import logger
+
 
 def hello_world() -> str:
     """

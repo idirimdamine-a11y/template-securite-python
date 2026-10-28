@@ -1,4 +1,5 @@
-from scapy.all import IP, TCP, ARP, Raw
+from scapy.all import ARP, IP, TCP, Raw
+
 from src.tp1.utils.capture import Capture
 
 
@@ -62,7 +63,7 @@ def test_analyse_detects_sql_injection_and_flag():
 
 
 def test_capture_traffic_from_pcap(tmp_path):
-    from scapy.all import wrpcap, IP, ICMP
+    from scapy.all import ICMP, IP, wrpcap
     pcap_path = tmp_path / "test.pcap"
     wrpcap(str(pcap_path), [IP() / ICMP()])
     capture = Capture(pcap_file=str(pcap_path))

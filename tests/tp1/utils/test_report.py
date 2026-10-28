@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+
 from src.tp1.utils.report import Report
 
 
