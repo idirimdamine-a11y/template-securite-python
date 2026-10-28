@@ -88,13 +88,13 @@ class LLMTriage:
 
     def _validate(self, raw: str) -> dict:
         """JSON strict, champs attendus présents, score borné entre 0 et 10."""
-        match = re.search(r"\{.*\}", raw, re.S)
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
         if not match:
             raise ValueError("aucun JSON dans la réponse")
         verdict = json.loads(match.group(0))
         for key, expected_type in REQUIRED_KEYS.items():
             if not isinstance(verdict.get(key), expected_type):
-                raise ValueError(f"champ {key} absent ou invalide")
+                raise TypeError(f"champ {key} absent ou invalide")
         verdict["score_0_10"] = max(0, min(10, int(verdict["score_0_10"])))
         verdict["mitre_attack"] = [
             t for t in verdict["mitre_attack"]
