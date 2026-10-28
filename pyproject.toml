@@ -18,16 +18,7 @@ scapy = "^2.6.0"
 pygal = "^3.0.5"
 fpdf2 = "^2.8.1"
 python-dotenv = "^1.2.1"
-<<<<<<< HEAD
 matplotlib = "^3.11.2"
-lief = "^1.0.0"
-yara-python = "^4.5.4"
-python-magic = "^0.4.27"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.16.9"
-pytest-cov = "^7.1.0"
-=======
 # Module 2 - triage de malware
 lief = "^0.17"
 yara-python = "^4.5.1"
@@ -39,7 +30,8 @@ pwntools = "^4.13.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
->>>>>>> upstream/main
+ruff = "^0.16.9"
+pytest-cov = "^7.1.0"
 
 [build-system]
 requires = ["poetry-core"]
