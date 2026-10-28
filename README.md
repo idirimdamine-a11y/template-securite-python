@@ -37,3 +37,16 @@ poetry run tp1
 ```
 poetry run pytest
 ```
+
+
+## TP2 – Triage de malware
+
+Analyse des fichiers suspects : empreintes, entropie, IOC, règles YARA,
+puis verdict d'un LLM (OpenRouter ou Ollama, avec repli si indisponible).
+Un rapport JSON et un PDF sont générés pour chaque échantillon.
+
+```
+poetry run tp2 --samples DOSSIER --rules DOSSIER --out DOSSIER
+```
+
+La clé OpenRouter se met dans un fichier `.env` : `OPENROUTER_API_KEY=...`
