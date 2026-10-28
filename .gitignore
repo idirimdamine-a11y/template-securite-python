@@ -19,3 +19,4 @@ test.pdf
 report.json
 graph.png
 *.png
+.env
